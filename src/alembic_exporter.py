@@ -1,6 +1,7 @@
 import maya.cmds as cmds
 import maya.OpenMayaUI as omui
 from PySide2 import QtCore, QtWidgets
+from PySide2.QtGui import QColor, QPalette
 from shiboken2 import wrapInstance
 import os
 import subprocess
@@ -46,13 +47,35 @@ class AlembicExporter(QtWidgets.QDialog):
         self.playblast_checkbox = QtWidgets.QCheckBox("Generate Playblast (feature not yet implemented)")
         self.playblast_checkbox.setChecked(False)
         self.playblast_checkbox.setEnabled(False)  # Disable the checkbox
+        self.pre_roll_spinner = QtWidgets.QSpinBox()
+        self.pre_roll_spinner.setRange(0, 1000)
+        self.pre_roll_spinner.setValue(50)
+        self.post_roll_spinner = QtWidgets.QSpinBox()
+        self.post_roll_spinner.setRange(0, 1000)
+        self.post_roll_spinner.setValue(50)
         self.submit_button = QtWidgets.QPushButton("Submit")
+        
+        # Set the submit button color to light blue
+        self.submit_button.setStyleSheet("QPushButton { background-color: #4285F4; color: white; }")
     
     def create_layout(self):
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(self.geo_list_widget)
         layout.addWidget(self.playblast_checkbox)
-        layout.addWidget(self.submit_button)
+        
+        spinner_layout = QtWidgets.QHBoxLayout()
+        spinner_layout.addWidget(QtWidgets.QLabel("Pre Roll Frames:"))
+        spinner_layout.addWidget(self.pre_roll_spinner)
+        spinner_layout.addWidget(QtWidgets.QLabel("Post Roll Frames:"))
+        spinner_layout.addWidget(self.post_roll_spinner)
+        
+        layout.addLayout(spinner_layout)
+        
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(self.submit_button)
+        
+        layout.addLayout(button_layout)
     
     def create_connections(self):
         self.submit_button.clicked.connect(self.on_submit)
@@ -128,13 +151,24 @@ class AlembicExporter(QtWidgets.QDialog):
         start_frame = cmds.playbackOptions(query=True, minTime=True)
         end_frame = cmds.playbackOptions(query=True, maxTime=True)
         
+        pre_roll = self.pre_roll_spinner.value()
+        post_roll = self.post_roll_spinner.value()
+        
+        # Adjust the timeline to accommodate pre and post roll frames
+        original_start_frame = start_frame
+        original_end_frame = end_frame
+        new_start_frame = start_frame - pre_roll
+        new_end_frame = end_frame + post_roll
+        
+        cmds.playbackOptions(minTime=new_start_frame, maxTime=new_end_frame)
+        
         cmds.select(geo_objects, replace=True)
-        cmds.bakeResults(simulation=True, t=(start_frame, end_frame), sampleBy=1, oversamplingRate=1, disableImplicitControl=True,
+        cmds.bakeResults(simulation=True, t=(new_start_frame, new_end_frame), sampleBy=1, oversamplingRate=1, disableImplicitControl=True,
                          preserveOutsideKeys=True, sparseAnimCurveBake=False, removeBakedAttributeFromLayer=False,
                          bakeOnOverrideLayer=False, minimizeRotation=True, controlPoints=False, shape=True)
         
         abc_export_command = '-frameRange {0} {1} -uvWrite -worldSpace -writeVisibility -dataFormat ogawa'.format(
-            start_frame, end_frame)
+            new_start_frame, new_end_frame)
         
         for obj in geo_objects:
             abc_export_command += ' -root ' + obj
@@ -142,6 +176,9 @@ class AlembicExporter(QtWidgets.QDialog):
         # Add quotes around the output path to handle spaces
         abc_export_command += ' -file "{}"'.format(output_path)
         cmds.AbcExport(j=abc_export_command)
+        
+        # Restore the original timeline
+        cmds.playbackOptions(minTime=original_start_frame, maxTime=original_end_frame)
     
     def generate_playblast(self, output_dir):
         # Placeholder for playblast generation logic
