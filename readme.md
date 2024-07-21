@@ -34,7 +34,7 @@ This tool provides an interface in Maya for exporting selected geometry objects 
 ## Usage
 1. **Setup the Shelf Button in Maya:**
    - Create a new shelf button in Maya.
-   - Use the following Python code for the shelf button:
+   - Use the following Python code for the shelf button:d
 
      ```python
      import sys
