@@ -43,8 +43,9 @@ class AlembicExporter(QtWidgets.QDialog):
     
     def create_widgets(self):
         self.geo_list_widget = QtWidgets.QListWidget()
-        self.playblast_checkbox = QtWidgets.QCheckBox("Generate Playblast")
-        self.playblast_checkbox.setChecked(True)
+        self.playblast_checkbox = QtWidgets.QCheckBox("Generate Playblast (feature not yet implemented)")
+        self.playblast_checkbox.setChecked(False)
+        self.playblast_checkbox.setEnabled(False)  # Disable the checkbox
         self.submit_button = QtWidgets.QPushButton("Submit")
     
     def create_layout(self):
