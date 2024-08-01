@@ -6,6 +6,7 @@ from shiboken2 import wrapInstance
 import os
 import subprocess
 import platform
+from rig_utils import RigUtils  # Importing the rig_utils module
 
 def get_maya_window():
     main_window_ptr = omui.MQtUtil.mainWindow()
@@ -114,8 +115,14 @@ class AlembicExporter(QtWidgets.QDialog):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
         
+        # Capture current attribute values before modifying them
+        RigUtils.capture_attrs()
+        
         # Run the export process
         self.export_alembic(selected_geo_objects, output_path)
+        
+        # Restore the attributes to their original values
+        # RigUtils.restore_attrs()
         
         if self.playblast_checkbox.isChecked():
             self.generate_playblast(output_dir)
@@ -161,6 +168,9 @@ class AlembicExporter(QtWidgets.QDialog):
         new_end_frame = end_frame + post_roll
         
         cmds.playbackOptions(minTime=new_start_frame, maxTime=new_end_frame)
+        
+        # Force specific attribute values before exporting
+        RigUtils.force_attrs()
         
         cmds.select(geo_objects, replace=True)
         cmds.bakeResults(simulation=True, t=(new_start_frame, new_end_frame), sampleBy=1, oversamplingRate=1, disableImplicitControl=True,
