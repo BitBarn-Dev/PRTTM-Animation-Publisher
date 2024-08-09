@@ -1,8 +1,3 @@
-Sure, here's a README.md file that follows the structure you've mentioned:
-
-### README.md
-
-```markdown
 # Alembic Exporter for Maya
 
 ## Description
@@ -98,6 +93,3 @@ To extend the tool:
 
 ## License
 This project is licensed under the MIT License.
-```
-
-This README provides a clear and organized structure for users to understand and utilize your Alembic Exporter tool effectively.
